@@ -479,6 +479,7 @@ class RunPage(PageBase):
         self._mode_combo.setCurrentIndex(1 if config.router_mode else 0)
         self._build_main_settings()
         self._build_advanced_groups()
+        self._build_content_splitter()
         # Apply mode visibility AFTER the main/advanced cards exist, otherwise
         # the hasattr() guards skip them and single-model widgets stay visible
         # on startup even when config has router_mode enabled.
@@ -741,7 +742,7 @@ class RunPage(PageBase):
                 user_grid.addWidget(option_card, row, col)
             layout.addLayout(user_grid)
         self._main_settings_card = card
-        self._layout.addWidget(card)
+        # Card is added to the splitter in _build_content_splitter()
 
     def _build_advanced_groups(self) -> None:
         card = Card(self._body)
@@ -804,98 +805,46 @@ class RunPage(PageBase):
         layout.addWidget(header_row)
         layout.addWidget(self._advanced_body)
         self._advanced_card = card
-        self._layout.addWidget(card)
-    def _refit_advanced_panel(self) -> None:
-        """Resize the advanced card to fit the **active** tab's content.
+        # Card is added to the splitter in _build_content_splitter()
 
-        When the body is collapsed, sizes the card to just the header row.
-        When expanded, sizes to the active tab page + tab bar + header.
+    def _build_content_splitter(self) -> None:
+        """Create a vertical QSplitter for main settings and advanced groups.
+
+        Allows the user to drag the divider to resize sections.
         """
+        if hasattr(self, '_content_splitter') and self._content_splitter is not None:
+            self._content_splitter.setParent(None)
+            self._content_splitter.deleteLater()
 
+        self._content_splitter = QSplitter(Qt.Orientation.Vertical, self._body)
+        self._content_splitter.setChildrenCollapsible(False)
+        self._content_splitter.addWidget(self._main_settings_card)
+        self._content_splitter.addWidget(self._advanced_card)
+        # Give the advanced groups more initial space
+        self._content_splitter.setSizes([300, 500])
+        self._layout.addWidget(self._content_splitter)
+
+    def _refit_advanced_panel(self) -> None:
+        """Handle collapse/expand of the advanced groups body.
+
+        With the QSplitter managing overall height, we only need to
+        toggle the body visibility and let the splitter handle sizing.
+        """
         def _do() -> None:
             try:
                 if not self._advanced_tabs:
                     return
-                card = self._advanced_body.parentWidget()
-                if card is None:
-                    return
-                card_layout = card.layout()
-                card_m = card_layout.contentsMargins()
-                header_item = card_layout.itemAt(0) if card_layout is not None else None
-                header = header_item.widget() if header_item else None
-                header_layout = header.layout() if header else None
-                if header_layout is not None:
-                    header_layout.activate()
-                header_h = header.minimumSizeHint().height() if header else 0
-                if not self._advanced_body.isVisible():
-                    # Collapsed: reset body constraints and size to header only.
-                    self._advanced_body.setMinimumHeight(0)
-                    self._advanced_body.setMaximumHeight(0)
-                    card_h = header_h + card_m.top() + card_m.bottom()
-                    card.setMinimumHeight(card_h)
-                    card.setMaximumHeight(card_h)
-                    return
-
-                active_index = self._advanced_tabs.currentIndex()
-                if active_index < 0:
-                    return
-                page = self._advanced_tabs.widget(active_index)
-                if page is None:
-                    return
-
-                # Ensure the page layout has settled at its current width.
-                content = page.widget() if isinstance(page, QScrollArea) else page
-                inner_layout = content.layout()
-                if inner_layout is not None:
-                    inner_layout.activate()
-
-                # Height the active page needs, capped so overflow scrolls.
-                h = content.minimumSizeHint().height()
-                if h < 80:
-                    h = 80
-                if h > 400:
-                    h = 400
-
-                # Set every page: active gets its calculated height,
-                # inactive are squashed to 0 so they don't affect sizing.
+                # Reset any min/max height constraints that the old
+                # refit logic may have left on the body or its pages.
+                self._advanced_body.setMinimumHeight(0)
+                self._advanced_body.setMaximumHeight(16777215)
                 for i in range(self._advanced_tabs.count()):
                     p = self._advanced_tabs.widget(i)
-                    if p is None:
-                        continue
-                    if i == active_index:
-                        p.setMinimumHeight(h)
-                        p.setMaximumHeight(h)
-                    else:
+                    if p is not None:
                         p.setMinimumHeight(0)
-                        p.setMaximumHeight(0)
-
-                # WrappedTabs height = tab bar + active page.
-                tab_bar_h = self._advanced_tabs.tab_bar_height()
-                tabs_h = tab_bar_h + h
-
-                # Body height = tabs widget + body layout margins.
-                body_layout = self._advanced_body.layout()
-                body_m = body_layout.contentsMargins()
-                body_h = tabs_h + body_m.top() + body_m.bottom()
-                self._advanced_body.setMinimumHeight(body_h)
-                self._advanced_body.setMaximumHeight(body_h)
-
-                # Card height = header + body + spacing + card margins.
-                card_h = (
-                    body_h
-                    + header_h
-                    + card_layout.spacing()
-                    + card_m.top()
-                    + card_m.bottom()
-                )
-                card.setMinimumHeight(card_h)
-                card.setMaximumHeight(card_h)
+                        p.setMaximumHeight(16777215)
             except Exception:
                 return
-
-        # Defer the recompute: currentChanged fires BEFORE the new page's
-        # layout has been recomputed.  QTimer.singleShot(0) schedules the
-        # call for after the current event.
         QTimer.singleShot(0, _do)
 
     def _build_schema_advanced(self, tabs: _WrappedTabs, handled: set[str]) -> None:
@@ -1204,6 +1153,7 @@ class RunPage(PageBase):
             self._advanced_card.setParent(None)
             self._advanced_card.deleteLater()
             self._build_advanced_groups()
+            self._build_content_splitter()
             # Restore values from captured state
             self._restore_form_values(saved_settings, saved_raw_args, saved_user_set)
             self._update_command_preview()
@@ -1268,6 +1218,7 @@ class RunPage(PageBase):
         self._advanced_card.setParent(None)
         self._advanced_card.deleteLater()
         self._build_advanced_groups()
+        self._build_content_splitter()
         self._restore_form_values(saved_settings, saved_raw_args, saved_user_set)
         self._update_command_preview()
 
@@ -1494,6 +1445,7 @@ class RunPage(PageBase):
                 idx = w.findData(default)
                 if idx >= 0:
                     w.setCurrentIndex(idx)
+            install_wheel_guard(w)
             w.currentIndexChanged.connect(self._on_editor_changed)
             return w
         w = QLineEdit(parent)
@@ -1554,6 +1506,7 @@ class RunPage(PageBase):
             for value, label in rt_opt.enum_values:
                 w.addItem(label, value)
             w.setMinimumWidth(120)
+            install_wheel_guard(w)
             w.currentIndexChanged.connect(self._on_editor_changed)
             return w
         w = QLineEdit(parent)

@@ -21,28 +21,30 @@ from PySide6.QtWidgets import (
 
 
 class _WheelGuardFilter(QObject):
-    """Event filter that ignores wheel events on spinboxes unless focused.
+    """Event filter that blocks wheel events on option controls.
 
-    Installed on QSpinBox / QDoubleSpinBox widgets to prevent accidental
-    value changes when the user is scrolling a parent QScrollArea and the
-    cursor happens to pass over a spinbox.
+    Installed on QSpinBox, QDoubleSpinBox, QSlider, and QComboBox widgets
+    to prevent accidental value changes when the user is scrolling a
+    parent QScrollArea.  Wheel events are always consumed — the user
+    must click/drag or type to change values.
     """
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.Wheel and not obj.hasFocus():
-            return True  # consume the event — do not change the value
+        if event.type() == QEvent.Type.Wheel:
+            return True  # always consume — never change values via wheel
         return super().eventFilter(obj, event)
 
 
-# Singleton filter instance shared across all spinboxes.
+# Singleton filter instance shared across all controls.
 _WHEEL_GUARD = _WheelGuardFilter()
 
 
 def install_wheel_guard(widget: QWidget) -> None:
     """Install the wheel-guard event filter on *widget*.
 
-    Call this on any QSpinBox, QDoubleSpinBox, or composite containing one
-    to prevent accidental value changes during page scrolling.
+    Call this on any QSpinBox, QDoubleSpinBox, QSlider, QComboBox, or
+    composite containing one to prevent accidental value changes during
+    page scrolling.
     """
     widget.installEventFilter(_WHEEL_GUARD)
 
@@ -66,6 +68,7 @@ class SliderSpinBox(QWidget):
         layout.addWidget(self._slider, 1)
         layout.addWidget(self._spin, 0)
         self.setStyleSheet("background: transparent; border: none;")
+        install_wheel_guard(self._slider)
         install_wheel_guard(self._spin)
 
         self._slider.valueChanged.connect(self._on_slider)
@@ -149,6 +152,7 @@ class SliderDoubleSpinBox(QWidget):
         layout.addWidget(self._slider, 1)
         layout.addWidget(self._spin, 0)
         self.setStyleSheet("background: transparent; border: none;")
+        install_wheel_guard(self._slider)
         install_wheel_guard(self._spin)
 
         self._slider.valueChanged.connect(self._on_slider)
