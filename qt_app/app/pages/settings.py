@@ -21,6 +21,7 @@ from ..services.dialogs import pick_directory, pick_file
 from ..services.option_schema import build_runtime_schema
 from ..widgets.buttons import DangerButton, SecondaryButton, SuccessButton
 from ..widgets.cards import Card, CardTitle, Chip
+from ..widgets.slider_spin import install_wheel_guard
 from .base import PageBase, PagePolicy
 
 
@@ -124,6 +125,7 @@ class SettingsPage(PageBase):
         self._port_input = QSpinBox(card)
         self._port_input.setRange(1, 65535)
         self._port_input.setValue(self._config.port if self._config else 8080)
+        install_wheel_guard(self._port_input)
         form.addRow("Port", self._port_input)
 
         self._remote_monitor_check = QCheckBox("Monitor a remote llama-server instead on Dashboard", card)
@@ -138,6 +140,7 @@ class SettingsPage(PageBase):
         self._remote_port_input = QSpinBox(card)
         self._remote_port_input.setRange(1, 65535)
         self._remote_port_input.setValue(self._config.remote_monitor_port if self._config else 8080)
+        install_wheel_guard(self._remote_port_input)
         form.addRow("Remote monitor port", self._remote_port_input)
 
         layout.addLayout(form)
@@ -199,19 +202,23 @@ class SettingsPage(PageBase):
 
         self._global_threads = QSpinBox(card)
         self._global_threads.setRange(0, 1024)
+        install_wheel_guard(self._global_threads)
         form.addRow("Threads", self._global_threads)
 
         self._global_batch = QSpinBox(card)
         self._global_batch.setRange(0, 1_000_000)
+        install_wheel_guard(self._global_batch)
         form.addRow("Batch size", self._global_batch)
 
         self._global_gpu_layers = QSpinBox(card)
         self._global_gpu_layers.setRange(0, 1_000_000)
+        install_wheel_guard(self._global_gpu_layers)
         form.addRow("GPU layers", self._global_gpu_layers)
 
         self._global_temp = QDoubleSpinBox(card)
         self._global_temp.setDecimals(3)
         self._global_temp.setRange(0.0, 10.0)
+        install_wheel_guard(self._global_temp)
         form.addRow("Temperature", self._global_temp)
 
         fields = [

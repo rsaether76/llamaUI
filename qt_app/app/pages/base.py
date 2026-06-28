@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget
 
 
@@ -18,6 +18,67 @@ class PagePolicy(Enum):
     STANDARD = "standard"
     INSPECTOR_OPTIONAL = "inspector_optional"
     FULL_WIDTH = "full_width"
+
+
+class _WheelPropagatorFilter(QObject):
+    """Event filter that propagates wheel events to a parent QScrollArea.
+
+    Installed on inner QScrollAreas (e.g. advanced-group tab containers)
+    so that when the inner area reaches its scroll limit, the remaining
+    wheel delta is forwarded to the outer page-level QScrollArea.
+
+    Without this, wheel events are silently consumed by the inner area
+    once it hits its boundary, and the outer page stops scrolling.
+    """
+
+    def __init__(self, target_scroll_area: QScrollArea, parent: QObject | None = None):
+        super().__init__(parent)
+        self._target = target_scroll_area
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        if event.type() != QEvent.Type.Wheel:
+            return super().eventFilter(obj, event)
+
+        # Let the inner scroll area handle the event first by checking
+        # whether it is at a boundary in the wheel direction.
+        inner = obj if isinstance(obj, QScrollArea) else None
+        if inner is None:
+            return super().eventFilter(obj, event)
+
+        sb = inner.verticalScrollBar()
+        delta = event.angleDelta().y()
+        at_top = delta > 0 and sb.value() == sb.minimum()
+        at_bottom = delta < 0 and sb.value() == sb.maximum()
+
+        if at_top or at_bottom:
+            # Forward to the target (outer) scroll area.
+            # Post a cloned wheel event so Qt delivers it normally.
+            from PySide6.QtGui import QWheelEvent
+            forwarded = QWheelEvent(
+                event.position(),
+                event.globalPosition(),
+                event.pixelDelta(),
+                event.angleDelta(),
+                event.buttons(),
+                event.modifiers(),
+                event.phase(),
+                event.inverted(),
+                event.source(),
+            )
+            from PySide6.QtWidgets import QApplication
+            QApplication.sendEvent(self._target.viewport(), forwarded)
+            return True  # consume the original
+
+        return super().eventFilter(obj, event)
+
+
+def install_wheel_propagation(inner: QScrollArea, outer: QScrollArea) -> None:
+    """Install wheel propagation from *inner* to *outer* scroll area.
+
+    When the inner area is scrolled to its boundary, wheel events are
+    forwarded to the outer area so the page continues scrolling.
+    """
+    inner.installEventFilter(_WheelPropagatorFilter(inner, inner))
 
 
 

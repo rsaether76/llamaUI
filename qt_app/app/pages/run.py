@@ -48,8 +48,8 @@ from ..widgets.buttons import DangerButton, FilterPill, SecondaryButton, Success
 from ..widgets.cards import Card, CardTitle, ElidedLabel, FieldTile, OptionCard
 from ..widgets.collapsible import CollapsibleGroup
 from ..widgets.flow import FlowLayout
-from ..widgets.slider_spin import SliderDoubleSpinBox, SliderSpinBox
-from .base import PageBase
+from ..widgets.slider_spin import SliderDoubleSpinBox, SliderSpinBox, install_wheel_guard
+from .base import PageBase, install_wheel_propagation
 
 MAIN_OPTION_IDS = [
     "ctx_size", "cache_type_k", "cache_type_v", "no_kv_offload", "flash_attn",
@@ -942,6 +942,7 @@ class RunPage(PageBase):
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             scroll.setWidget(tab_page)
+            install_wheel_propagation(scroll, self)
             tabs.addTab(scroll, "Raw extra args")
 
         # Track tab pages by display name for user-option injection
@@ -998,6 +999,7 @@ class RunPage(PageBase):
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             scroll.setWidget(tab_page)
+            install_wheel_propagation(scroll, self)
             tabs.addTab(scroll, display)
 
         # Inject user-added options into existing or new tabs
@@ -1054,6 +1056,7 @@ class RunPage(PageBase):
                 scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
                 scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
                 scroll.setWidget(tab_page)
+                install_wheel_propagation(scroll, self)
                 tabs.addTab(scroll, dest_display)
 
             tab_page, grid, counter = tab_info
@@ -1128,6 +1131,7 @@ class RunPage(PageBase):
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             scroll.setWidget(tab_page)
+            install_wheel_propagation(scroll, self)
             tabs.addTab(scroll, display)
         # Inject user-added options
         self._inject_user_options_into_tabs(tabs)
@@ -1361,6 +1365,7 @@ class RunPage(PageBase):
         self._models_max_spin = QSpinBox(self._router_panel)
         self._models_max_spin.setRange(1, 32)
         self._models_max_spin.setValue(1)
+        install_wheel_guard(self._models_max_spin)
         self._models_max_spin.valueChanged.connect(self._update_command_preview)
         max_row.addWidget(self._models_max_spin)
         max_row.addStretch(1)
@@ -1445,6 +1450,7 @@ class RunPage(PageBase):
             else:
                 w = QSpinBox(parent)
                 w.setRange(0, 1_000_000)
+                install_wheel_guard(w)
             if option.step is not None:
                 w.setSingleStep(int(option.step))
             if default is not None:
@@ -1462,6 +1468,7 @@ class RunPage(PageBase):
                 w = QDoubleSpinBox(parent)
                 w.setDecimals(3)
                 w.setRange(0.0, 1000.0)
+                install_wheel_guard(w)
             if option.step is not None:
                 w.setSingleStep(float(option.step))
             if default is not None:
