@@ -140,7 +140,13 @@ def _parse_option_head(head: str) -> tuple[list[str], Optional[str]]:
 
 
 _OPTION_RE = re.compile(
-    r"^\s{0,8}((?:-[\w?],\s*)?--?[\w][\w-]*(?:\s+[<\[]?[A-Za-z0-9_./:|\-]+[>\]]?)?(?:,\s*--?[\w][\w-]*(?:\s+[<\[]?[A-Za-z0-9_./:|\-]+[>\]]?)?)*)\s{2,}(.*)$"
+    r"^\s{0,8}((?:-[\w?],\s*)?--?[\w][\w-]*(?:\s+[<\[{]?[A-Za-z0-9_./:|,\-]+[>\]}]?)?(?:,\s*--?[\w][\w-]*(?:\s+[<\[{]?[A-Za-z0-9_./:|,\-]+[>\]}]?)?)*)\s{2,}(.*)$"
+)
+
+# Matches option lines that have NO description on the same line
+# (description follows on subsequent indented lines).
+_OPTION_HEAD_ONLY_RE = re.compile(
+    r"^\s{0,8}((?:-[\w?],\s*)?--?[\w][\w-]*(?:\s+[<\[{]?[A-Za-z0-9_./:|,\-]+[>\]}]?)?(?:,\s*--?[\w][\w-]*(?:\s+[<\[{]?[A-Za-z0-9_./:|,\-]+[>\]}]?)?)*)\s*$"
 )
 
 
@@ -214,6 +220,23 @@ def parse_help_options(help_text: str) -> list[ParsedOption]:
             )
             options.append(current)
             continue
+        # Try head-only match (flag line with no description — follows on next line)
+        head_match = _OPTION_HEAD_ONLY_RE.match(line)
+        if head_match and "-" in head_match.group(1):
+            flags, value_name = _parse_option_head(head_match.group(1))
+            if flags:
+                canonical = next((f for f in flags if f.startswith("--")), flags[0])
+                current = ParsedOption(
+                    flags=flags,
+                    value_name=value_name,
+                    kind=_infer_kind(value_name, "", canonical),
+                    description="",
+                    group=_infer_group(canonical, "", current_section),
+                    default=None,
+                    raw=line.strip(),
+                )
+                options.append(current)
+                continue
 
         if current is not None and (raw_line.startswith(" ") or raw_line.startswith("\t")):
             continuation = line.strip()
