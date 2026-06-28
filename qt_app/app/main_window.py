@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -33,6 +34,16 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("llamaUI")
         self.resize(1240, 860)
         self.setMinimumSize(960, 680)
+        # Center on the primary screen so the window doesn't land on a
+        # secondary monitor or off-screen (common on Cinnamon/X11 with
+        # multi-monitor setups).
+        screen = QGuiApplication.primaryScreen()
+        if screen is not None:
+            geo = screen.availableGeometry()
+            self.move(
+                geo.x() + (geo.width() - self.width()) // 2,
+                geo.y() + (geo.height() - self.height()) // 2,
+            )
 
         root = QWidget(self)
         root.setObjectName("AppRoot")
