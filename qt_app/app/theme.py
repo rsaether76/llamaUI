@@ -1,8 +1,7 @@
 """Color tokens, spacing, typography, and the global QSS stylesheet.
 
 Centralizing the visual system here means the rest of the app can stay focused
-on behavior.  The palette is a professional slate dark theme with a sky-blue
-accent — dense, muted, and desktop-native.
+on behavior.  A clean light theme with strong contrast for readability.
 """
 from __future__ import annotations
 
@@ -10,41 +9,41 @@ from dataclasses import dataclass
 
 
 # --- Color tokens -------------------------------------------------------------
-# Surface scale: deeper tones recede, lighter tones carry content.
-BG_APP = "#0f1117"        # window background
-BG_SIDEBAR = "#161922"    # left rail
-BG_HEADER = "#1a1d26"     # top bar
-BG_PANEL = "#1e222d"      # cards / panels
-BG_PANEL_ALT = "#1a1e27"  # inspector / alternate panels
-BG_RAISED = "#252a36"     # nested blocks, inputs, command preview
-BG_INSET = "#0a0c10"      # logs, deepest inset
+# Light surface scale: white/light-gray backgrounds with strong text contrast.
+BG_APP = "#f5f6f8"        # window background
+BG_SIDEBAR = "#e8eaef"    # left rail
+BG_HEADER = "#ffffff"     # top bar
+BG_PANEL = "#ffffff"      # cards / panels
+BG_PANEL_ALT = "#f0f1f4"  # inspector / alternate panels
+BG_RAISED = "#e9ebf0"     # nested blocks, inputs, command preview
+BG_INSET = "#dde0e7"      # logs, deepest inset
 
-BORDER = "#2a2e3b"
-BORDER_SOFT = "#1e2129"
-BORDER_HOVER = "#3a3f4f"
+BORDER = "#c5c9d3"
+BORDER_SOFT = "#d8dbe3"
+BORDER_HOVER = "#a0a5b4"
 
-FG_PRIMARY = "#e2e4e9"
-FG_SECONDARY = "#9aa0b2"
+FG_PRIMARY = "#1a1d26"
+FG_SECONDARY = "#4a5060"
 FG_MUTED = "#6b7280"
-FG_FAINT = "#4b515e"
+FG_FAINT = "#9ca3af"
 
-ACCENT = "#0ea5e9"         # primary action (sky blue)
-ACCENT_HOVER = "#38bdf8"
-ACCENT_PRESSED = "#0284c7"
-ACCENT_SOFT = "#0c4a6e"    # pill/chip backgrounds
-ACCENT_DIM = "rgba(14, 165, 233, 0.12)"
+ACCENT = "#0b7dda"         # primary action (blue)
+ACCENT_HOVER = "#0969b8"
+ACCENT_PRESSED = "#075a9e"
+ACCENT_SOFT = "#d0e8f7"    # pill/chip backgrounds
+ACCENT_DIM = "rgba(11, 125, 218, 0.10)"
 
-SUCCESS = "#22c55e"
-SUCCESS_SOFT = "#16a34a"
-WARNING = "#f59e0b"
-DANGER = "#ef4444"
-DANGER_HOVER = "#dc2626"
+SUCCESS = "#16a34a"
+SUCCESS_SOFT = "#dcfce7"
+WARNING = "#d97706"
+DANGER = "#dc2626"
+DANGER_HOVER = "#b91c1c"
 
 SIDEBAR_WIDTH = 220
 SIDEBAR_DEFAULT_WIDTH = 220
 SIDEBAR_MIN_WIDTH = 160
 SIDEBAR_COLLAPSED_WIDTH = 56
-SPLITTER_HANDLE_WIDTH = 3
+SPLITTER_HANDLE_WIDTH = 6
 INSPECTOR_WIDTH = 320
 INSPECTOR_DEFAULT_WIDTH = 320
 INSPECTOR_MIN_WIDTH = 220
@@ -173,12 +172,21 @@ def build_stylesheet() -> str:
         padding: 2px 6px;
         font-size: 11px;
     }}
-    /* Splitter handle */
+    /* Splitter handle — visible grab bar */
     QSplitter::handle:horizontal {{
-        background-color: {BORDER_SOFT};
+        background-color: {BORDER};
         width: {SPLITTER_HANDLE_WIDTH}px;
     }}
     QSplitter::handle:horizontal:hover {{
+        background-color: {ACCENT};
+    }}
+    QSplitter::handle:vertical {{
+        background-color: {BORDER};
+        height: {SPLITTER_HANDLE_WIDTH}px;
+        border-top: 1px solid {BORDER_HOVER};
+        border-bottom: 1px solid {BORDER_HOVER};
+    }}
+    QSplitter::handle:vertical:hover {{
         background-color: {ACCENT};
     }}
     /* --- Header bar --- */
@@ -475,6 +483,27 @@ def build_stylesheet() -> str:
         background: {ACCENT_HOVER};
         border-color: {ACCENT_HOVER};
     }}
+    /* --- Checkbox --- */
+    QCheckBox {{
+        color: {FG_PRIMARY};
+        spacing: 6px;
+        font-size: 13px;
+    }}
+    QCheckBox::indicator {{
+        width: 16px;
+        height: 16px;
+        border: 2px solid {BORDER_HOVER};
+        border-radius: 3px;
+        background-color: {BG_PANEL};
+    }}
+    QCheckBox::indicator:hover {{
+        border-color: {ACCENT};
+    }}
+    QCheckBox::indicator:checked {{
+        background-color: {ACCENT};
+        border-color: {ACCENT};
+    }}
+
     /* --- Tooltip --- */
     QToolTip {{
         background-color: {BG_RAISED};
@@ -537,9 +566,9 @@ def build_stylesheet() -> str:
         border-radius: 4px;
     }}
 
-    /* --- Splitter handle --- */
+    /* --- Splitter handle (generic) --- */
     QSplitter::handle {{
-        background-color: {BORDER_SOFT};
+        background-color: {BORDER};
     }}
 
     /* --- Importance labels --- */
@@ -633,7 +662,7 @@ def build_stylesheet() -> str:
 
 
 def apply_palette(app) -> None:
-    """Set a dark palette that matches the QSS for native-rendered widgets.
+    """Set a light palette that matches the QSS for native-rendered widgets.
 
     QSS does not style every native surface (e.g. focus, tooltips, menus),
     so we set the default palette first and let QSS override per-control.
@@ -643,14 +672,14 @@ def apply_palette(app) -> None:
     p = QPalette()
     p.setColor(QPalette.ColorRole.Window, QColor(BG_APP))
     p.setColor(QPalette.ColorRole.WindowText, QColor(FG_PRIMARY))
-    p.setColor(QPalette.ColorRole.Base, QColor(BG_RAISED))
-    p.setColor(QPalette.ColorRole.AlternateBase, QColor(BG_PANEL))
+    p.setColor(QPalette.ColorRole.Base, QColor(BG_PANEL))
+    p.setColor(QPalette.ColorRole.AlternateBase, QColor(BG_PANEL_ALT))
     p.setColor(QPalette.ColorRole.Text, QColor(FG_PRIMARY))
-    p.setColor(QPalette.ColorRole.Button, QColor(BG_PANEL))
+    p.setColor(QPalette.ColorRole.Button, QColor(BG_RAISED))
     p.setColor(QPalette.ColorRole.ButtonText, QColor(FG_PRIMARY))
     p.setColor(QPalette.ColorRole.Highlight, QColor(ACCENT))
-    p.setColor(QPalette.ColorRole.HighlightedText, QColor(FG_PRIMARY))
+    p.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
     p.setColor(QPalette.ColorRole.PlaceholderText, QColor(FG_MUTED))
-    p.setColor(QPalette.ColorRole.ToolTipBase, QColor(BG_RAISED))
+    p.setColor(QPalette.ColorRole.ToolTipBase, QColor(BG_PANEL))
     p.setColor(QPalette.ColorRole.ToolTipText, QColor(FG_PRIMARY))
     app.setPalette(p)
