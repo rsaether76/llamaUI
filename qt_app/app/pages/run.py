@@ -904,10 +904,14 @@ class RunPage(PageBase):
         for rt_opt in self._schema.options:
             if rt_opt.id in handled:
                 continue
-            groups.setdefault(rt_opt.group, []).append(rt_opt)
+            # Normalize group key to display name to avoid duplicate tabs
+            # (parser uses slugs like "gpu_offload", catalog uses display
+            # names like "GPU / offload" — both must merge into one tab).
+            display_group = _group_display(rt_opt.group)
+            groups.setdefault(display_group, []).append(rt_opt)
 
         # Preserve catalog group order, then append any extra groups
-        group_order = list(LLAMA_OPTION_CATALOG.groups_in_order())
+        group_order = [_group_display(g) for g in LLAMA_OPTION_CATALOG.groups_in_order()]
         for g in groups:
             if g not in group_order:
                 group_order.append(g)
