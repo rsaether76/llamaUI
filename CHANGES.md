@@ -57,6 +57,22 @@ Two root causes:
 
 ---
 
+## Change 9: Stronger Gray Outlines for Input Fields (UX)
+
+### Problem
+QLineEdit, QComboBox, QSpinBox, and QDoubleSpinBox fields used the same subtle `BORDER` color (#c5c9d3) as decorative separators, making it hard to tell where an input field begins and ends.
+
+### Solution
+Added a new `INPUT_BORDER` token (#9ca3af) and used it for the borders of text fields, dropdowns, and spin boxes. Hover/focus states still use the accent blue.
+
+### Files Modified
+
+**`qt_app/app/theme.py`**
+- Added `INPUT_BORDER = "#9ca3af"` color token.
+- Updated `QLineEdit`, `QComboBox`, `QSpinBox`, and `QDoubleSpinBox` base border color to `{INPUT_BORDER}`.
+
+---
+
 ## Change 1: Option Picker Dialog (feature)
 
 ### Problem

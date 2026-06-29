@@ -21,6 +21,7 @@ BG_INSET = "#dde0e7"      # logs, deepest inset
 BORDER = "#c5c9d3"
 BORDER_SOFT = "#d8dbe3"
 BORDER_HOVER = "#a0a5b4"
+INPUT_BORDER = "#9ca3af"  # stronger gray outline for text/dropdown/spin fields
 
 FG_PRIMARY = "#1a1d26"
 FG_SECONDARY = "#4a5060"
@@ -307,7 +308,7 @@ def build_stylesheet() -> str:
     /* --- Inputs --- */
     QLineEdit {{
         background-color: {BG_RAISED};
-        border: 1px solid {BORDER};
+        border: 1px solid {INPUT_BORDER};
         border-radius: 6px;
         padding: 6px 10px;
         color: {FG_PRIMARY};
@@ -319,7 +320,7 @@ def build_stylesheet() -> str:
 
     QComboBox {{
         background-color: {BG_RAISED};
-        border: 1px solid {BORDER};
+        border: 1px solid {INPUT_BORDER};
         border-radius: 6px;
         padding: 4px 10px;
         color: {FG_PRIMARY};
@@ -351,7 +352,7 @@ def build_stylesheet() -> str:
 
     QSpinBox, QDoubleSpinBox {{
         background-color: {BG_RAISED};
-        border: 1px solid {BORDER};
+        border: 1px solid {INPUT_BORDER};
         border-radius: 6px;
         padding: 4px 8px;
         color: {FG_PRIMARY};
