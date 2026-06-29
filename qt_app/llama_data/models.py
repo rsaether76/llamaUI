@@ -227,11 +227,13 @@ class UserOptions:
     """Persisted set of user-added options (UI layout only, not values)."""
     version: int = 1
     options: list[UserOptionEntry] = field(default_factory=list)
+    hidden_flags: set[str] = field(default_factory=set)
 
     def to_json(self) -> dict[str, Any]:
         return {
             "version": self.version,
             "options": [e.to_json() for e in self.options],
+            "hidden_flags": sorted(self.hidden_flags),
         }
 
     @classmethod
@@ -246,7 +248,11 @@ class UserOptions:
                     opts.append(UserOptionEntry.from_json(item))
                 except (TypeError, ValueError, KeyError):
                     continue
-        return cls(version=int(data.get("version", 1)), options=opts)
+        raw_hidden = data.get("hidden_flags", [])
+        hidden: set[str] = set()
+        if isinstance(raw_hidden, list):
+            hidden = {str(f) for f in raw_hidden}
+        return cls(version=int(data.get("version", 1)), options=opts, hidden_flags=hidden)
 
     def has_flag(self, flag: str) -> bool:
         return any(e.flag == flag for e in self.options)
@@ -254,9 +260,20 @@ class UserOptions:
     def add(self, flag: str, destination: str) -> None:
         if not self.has_flag(flag):
             self.options.append(UserOptionEntry(flag=flag, destination=destination))
+        # Adding an option unhides it.
+        self.hidden_flags.discard(flag)
 
     def remove(self, flag: str) -> None:
         self.options = [e for e in self.options if e.flag != flag]
+
+    def is_hidden(self, flag: str) -> bool:
+        return flag in self.hidden_flags
+
+    def hide(self, flag: str) -> None:
+        self.hidden_flags.add(flag)
+
+    def unhide(self, flag: str) -> None:
+        self.hidden_flags.discard(flag)
 
 
 __all__ = ["AppConfig", "HfTokenSource", "LocalModel", "ModelProfile", "UserOptionEntry", "UserOptions", "utc_now"]

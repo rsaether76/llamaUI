@@ -67,9 +67,9 @@ class OptionCard(QFrame):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(12, 10, 12, 10)
         outer.setSpacing(6)
-        # Header row: [label  flag]       [●]
-        header = QHBoxLayout()
-        header.setSpacing(6)
+        # Header row: [label  flag]       [●] [actions]
+        self._header_layout = QHBoxLayout()
+        self._header_layout.setSpacing(6)
         self._label = QLabel(label, self)
         self._label.setObjectName("OptionCardLabel")
         if importance:
@@ -77,14 +77,14 @@ class OptionCard(QFrame):
             self._label.style().polish(self._label)
         self._flag = QLabel(flag, self)
         self._flag.setObjectName("OptionCardFlag")
-        header.addWidget(self._label)
-        header.addWidget(self._flag)
-        header.addStretch(1)
+        self._header_layout.addWidget(self._label)
+        self._header_layout.addWidget(self._flag)
+        self._header_layout.addStretch(1)
         self._dot = QLabel("●", self)
         self._dot.setObjectName("OptionCardChangedDot")
         self._dot.setVisible(False)
-        header.addWidget(self._dot)
-        outer.addLayout(header)
+        self._header_layout.addWidget(self._dot)
+        outer.addLayout(self._header_layout)
         # Body area for the editor widget
         self._body = QWidget(self)
         self._body.setStyleSheet("background: transparent; border: none;")
@@ -96,6 +96,10 @@ class OptionCard(QFrame):
     def add_editor(self, widget: QWidget) -> None:
         """Add the editor widget into the card body."""
         self._body_layout.addWidget(widget)
+
+    def add_header_widget(self, widget: QWidget) -> None:
+        """Add a small action widget (e.g. a remove button) to the header."""
+        self._header_layout.addWidget(widget)
 
     def set_changed(self, changed: bool) -> None:
         """Toggle the red dot in the top-right corner."""

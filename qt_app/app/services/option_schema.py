@@ -14,6 +14,12 @@ from .help_parser import ParsedOption, parse_help_options
 from .llama_server import LlamaServerProbe, validate_llama_server
 
 
+# Bump this whenever the parser or schema merge logic changes in a way that
+# would produce a different RuntimeSchema for the same binary. Bumping
+# invalidates cached schemas so the UI picks up newly-parsed options.
+SCHEMA_PARSER_VERSION: int = 1
+
+
 @dataclass
 class BinaryKey:
     path: str
@@ -67,6 +73,7 @@ class RuntimeSchema:
     parsed_count: int = 0
     curated_supported_count: int = 0
     unknown_count: int = 0
+    parser_version: int = 0
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -75,6 +82,7 @@ class RuntimeSchema:
             "parsed_count": self.parsed_count,
             "curated_supported_count": self.curated_supported_count,
             "unknown_count": self.unknown_count,
+            "parser_version": self.parser_version,
         }
 
     @classmethod
@@ -85,6 +93,7 @@ class RuntimeSchema:
             parsed_count=int(data.get("parsed_count", 0)),
             curated_supported_count=int(data.get("curated_supported_count", 0)),
             unknown_count=int(data.get("unknown_count", 0)),
+            parser_version=int(data.get("parser_version", 0)),
         )
 
 
@@ -165,6 +174,7 @@ def build_runtime_schema(path: str) -> tuple[LlamaServerProbe, RuntimeSchema]:
         parsed_count=len(parsed),
         curated_supported_count=curated_count,
         unknown_count=unknown_count,
+        parser_version=SCHEMA_PARSER_VERSION,
     )
 
 
@@ -187,7 +197,10 @@ class SchemaCache:
         envelope = load_envelope(self.path_for(binary))
         if envelope is None or not isinstance(envelope.data, dict):
             return None
-        return RuntimeSchema.from_json(envelope.data)
+        schema = RuntimeSchema.from_json(envelope.data)
+        if schema.parser_version != SCHEMA_PARSER_VERSION:
+            return None
+        return schema
 
 
 __all__ = [

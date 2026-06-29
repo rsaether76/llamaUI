@@ -124,18 +124,27 @@ def _extract_default(description: str) -> Optional[str]:
 
 
 def _parse_option_head(head: str) -> tuple[list[str], Optional[str]]:
-    chunks = [c.strip() for c in re.split(r",\s*", head) if c.strip()]
+    """Split an option head into flags and an optional value placeholder.
+
+    llama-server help lines separate flags and values by whitespace:
+
+        -m, --model FNAME
+        -sm, --split-mode {none,layer,row,tensor}
+        -ts, --tensor-split N0,N1,N2,...
+
+    We split on whitespace, treat every token starting with ``-`` as a
+    flag (stripping a trailing comma), and treat the first non-flag token
+    as the value placeholder. This keeps commas inside value placeholders
+    intact.
+    """
+    tokens = head.split()
     flags: list[str] = []
     value_name: Optional[str] = None
-    for chunk in chunks:
-        parts = chunk.split()
-        if not parts:
-            continue
-        flag = parts[0]
-        if flag.startswith("-"):
-            flags.append(flag)
-            if len(parts) > 1 and value_name is None:
-                value_name = parts[1].strip("<>[]")
+    for token in tokens:
+        if token.startswith("-"):
+            flags.append(token.rstrip(","))
+        elif value_name is None:
+            value_name = token.strip("<>[]{}")
     return flags, value_name
 
 

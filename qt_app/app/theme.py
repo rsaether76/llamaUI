@@ -623,6 +623,24 @@ def build_stylesheet() -> str:
         color: {DANGER};
         font-size: 12px;
     }}
+    QPushButton#UserOptionRemoveBtn {{
+        background-color: {BG_RAISED};
+        color: {FG_SECONDARY};
+        border: 1px solid {BORDER};
+        border-radius: 5px;
+        padding: 0;
+        font-size: 16px;
+        font-weight: bold;
+        min-width: 26px;
+        max-width: 26px;
+        min-height: 26px;
+        max-height: 26px;
+    }}
+    QPushButton#UserOptionRemoveBtn:hover {{
+        background-color: {DANGER};
+        color: white;
+        border-color: {DANGER};
+    }}
     #ArgumentSearchBox {{
         min-width: 200px;
     }}

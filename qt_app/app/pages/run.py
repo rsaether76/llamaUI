@@ -738,7 +738,7 @@ class RunPage(PageBase):
                     self._schema_options_by_id[rt_opt.id] = rt_opt
                 option_card.add_editor(widget)
                 remove_btn = self._make_user_option_remove_button(rt_opt.flag, card)
-                option_card.add_editor(remove_btn)
+                option_card.add_header_widget(remove_btn)
                 row, col = divmod(idx, 2)
                 user_grid.addWidget(option_card, row, col)
             layout.addLayout(user_grid)
@@ -850,9 +850,12 @@ class RunPage(PageBase):
 
     def _build_schema_advanced(self, tabs: _WrappedTabs, handled: set[str]) -> None:
         """Build advanced groups from the parsed runtime schema."""
+        user_opts = self.user_option_store.load()
         groups: dict[str, list[RuntimeOption]] = {}
         for rt_opt in self._schema.options:
             if rt_opt.id in handled:
+                continue
+            if user_opts.is_hidden(rt_opt.flag):
                 continue
             # Normalize group key to display name to avoid duplicate tabs
             # (parser uses slugs like "gpu_offload", catalog uses display
@@ -988,6 +991,15 @@ class RunPage(PageBase):
             if rt_opt.id not in self._schema_options_by_id:
                 self._schema_options_by_id[rt_opt.id] = rt_opt
 
+            # If this option is already shown in the UI (curated catalog or
+            # parsed schema), just add a remove button to the existing card
+            # instead of creating a duplicate.
+            if rt_opt.id in self._editors and rt_opt.id in self._option_cards:
+                existing_card = self._option_cards[rt_opt.id]
+                remove_btn = self._make_user_option_remove_button(rt_opt.flag, existing_card)
+                existing_card.add_header_widget(remove_btn)
+                continue
+
             dest_display = entry.destination
             tab_info = self._tab_pages.get(dest_display)
             if tab_info is None:
@@ -1037,7 +1049,7 @@ class RunPage(PageBase):
             self._editors[rt_opt.id] = widget
             option_card.add_editor(widget)
             remove_btn = self._make_user_option_remove_button(rt_opt.flag, tab_page)
-            option_card.add_editor(remove_btn)
+            option_card.add_header_widget(remove_btn)
             self._option_cards[rt_opt.id] = option_card
             row, col = divmod(idx, 2)
             grid.addWidget(option_card, row, col)
@@ -1045,9 +1057,13 @@ class RunPage(PageBase):
 
     def _build_catalog_advanced(self, tabs: _WrappedTabs, handled: set[str]) -> None:
         """Build advanced groups from the static catalog (fallback)."""
+        user_opts = self.user_option_store.load()
         self._tab_pages: dict[str, tuple[QWidget, QGridLayout, list[int]]] = {}
         for group in LLAMA_OPTION_CATALOG.groups_in_order():
-            options = [o for o in LLAMA_OPTION_CATALOG.by_group(group) if o.id not in handled]
+            options = [
+                o for o in LLAMA_OPTION_CATALOG.by_group(group)
+                if o.id not in handled and not user_opts.is_hidden(o.flag)
+            ]
             if not options:
                 continue
             tab_page = QWidget(tabs)
@@ -1189,17 +1205,18 @@ class RunPage(PageBase):
         self._refresh_option_cards()
 
     def _make_user_option_remove_button(self, flag: str, parent: QWidget) -> QPushButton:
-        """Create a small × button to remove a user-added option."""
+        """Create a visible remove button for a user-added option."""
         btn = QPushButton("\u00d7", parent)
         btn.setObjectName("UserOptionRemoveBtn")
-        btn.setFixedSize(20, 20)
+        btn.setProperty("variant", "danger")
+        btn.setFixedSize(26, 26)
         btn.setToolTip(f"Remove {flag} from the UI")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.clicked.connect(lambda checked=False, f=flag: self._remove_user_option(f))
         return btn
 
     def _remove_user_option(self, flag: str) -> None:
-        """Remove a user-added option and rebuild the UI."""
+        """Remove/hide an option and rebuild the UI."""
         reply = QMessageBox.question(
             self,
             "Remove option",
@@ -1210,6 +1227,7 @@ class RunPage(PageBase):
             return
         user_opts = self.user_option_store.load()
         user_opts.remove(flag)
+        user_opts.hide(flag)
         self.user_option_store.save(user_opts)
         # Capture and rebuild
         saved_settings, saved_raw_args, saved_user_set = self._settings_from_form()
@@ -1229,6 +1247,8 @@ class RunPage(PageBase):
         result = []
         for entry in user_opts.options:
             if entry.destination != destination:
+                continue
+            if user_opts.is_hidden(entry.flag):
                 continue
             rt_opt = self._schema_options_by_id.get(entry.flag)
             if rt_opt is None:

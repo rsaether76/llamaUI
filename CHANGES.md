@@ -7,6 +7,56 @@
 
 ---
 
+## Change 8: Fix `--split-mode` / `--tensor-split` Missing from UI (bugfix)
+
+### Problem
+`--split-mode` and `--tensor-split` are present in the curated catalog under the "GPU / offload" group, but they did not appear in the Advanced Groups UI.
+
+Two root causes:
+1. `_parse_option_head()` in `help_parser.py` split the option head on every comma. For `--split-mode {none,layer,row,tensor}` this produced the broken value placeholder `{none`; for `--tensor-split N0,N1,N2,...` it produced `N0`. Worse, cached schemas built by earlier parser versions were missing these options entirely (only 188 options cached vs. 231 parsed now).
+2. The runtime schema cache had no parser-version field, so stale cached schemas kept being reused even after parser fixes.
+
+### Solution
+1. Rewrote `_parse_option_head()` to split on whitespace instead of commas. Flag tokens like `-sm,` have their trailing comma stripped; value placeholders like `{none,layer,row,tensor}` and `N0,N1,N2,...` stay intact.
+2. Added `SCHEMA_PARSER_VERSION` and a `parser_version` field to `RuntimeSchema`. `SchemaCache.load()` now rejects cached schemas whose version doesn't match, forcing a re-parse when the parser changes.
+
+### Files Modified
+
+**`qt_app/app/services/help_parser.py`**
+- Rewrote `_parse_option_head()`: whitespace split + trailing-comma strip on flag tokens; value placeholders preserved.
+
+**`qt_app/app/services/option_schema.py`**
+- Added `SCHEMA_PARSER_VERSION = 1` constant.
+- Added `parser_version` field to `RuntimeSchema` with JSON round-trip.
+- `build_runtime_schema()` stamps new schemas with `SCHEMA_PARSER_VERSION`.
+- `SchemaCache.load()` returns `None` for schemas with a mismatched `parser_version`, so stale caches are discarded automatically.
+
+**`qt_app/llama_data/llama_options.py`**
+- Updated `split_mode` default from `"none"` to `"layer"` to match the binary's actual default.
+
+**`qt_app/app/widgets/cards.py`**
+- Added a header actions area to `OptionCard`.
+- Added `add_header_widget()` method so callers can place action buttons in the card header.
+
+**`qt_app/llama_data/models.py`**
+- Added `hidden_flags: set[str]` to `UserOptions` with JSON round-trip.
+- Added `is_hidden()`, `hide()`, `unhide()` methods.
+- `UserOptions.add()` now unhides the flag so re-adding a previously hidden option works.
+
+**`qt_app/app/pages/run.py`**
+- Moved user-added option remove buttons from the card body into the card header so they are always visible.
+- Styled the remove button with the `danger` variant and increased size to 26×26.
+- Clicking × now hides the option via `UserOptions.hidden_flags`, so the card actually disappears from the UI.
+- `_build_schema_advanced()` and `_build_catalog_advanced()` skip hidden flags.
+- `_user_added_options_for_destination()` skips hidden flags.
+- Reverted the over-aggressive picker filtering so the Add Options dialog again shows available schema options.
+- If a user-added option is already shown by the schema, the existing card gets the remove button instead of a duplicate card.
+
+**`qt_app/app/theme.py`**
+- Added `QPushButton#UserOptionRemoveBtn` QSS rule: 26×26 square, muted default, red on hover.
+
+---
+
 ## Change 1: Option Picker Dialog (feature)
 
 ### Problem
