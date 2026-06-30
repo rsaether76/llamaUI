@@ -68,10 +68,10 @@ Added a new `INPUT_BORDER` token (#9ca3af) and used it for the borders of text f
 ### Files Modified
 
 **`qt_app/app/theme.py`**
-- Added `INPUT_BORDER = "#6b7280"` and `INPUT_BG = "#ffffff"` color tokens.
-- Set `QLineEdit`, `QComboBox`, `QSpinBox`, and `QDoubleSpinBox` backgrounds to white and borders to the darker gray.
-- Added 2px accent border on focus and adjusted padding to keep size stable.
-- Added explicit `QComboBox::item`, `QComboBox::item:selected`, and `QComboBox::item:hover` rules so the selected dropdown item is clearly highlighted (blue background, white text).
+- Added `INPUT_BORDER = "#4a5060"` and `INPUT_BG = "#ffffff"` color tokens.
+- Set `QLineEdit`, `QComboBox`, `QSpinBox`, and `QDoubleSpinBox` backgrounds to white with a **2px solid dark-gray border** so fields are clearly outlined at rest.
+- Focus state only changes border color to accent blue, keeping the 2px width.
+- Scoped dropdown item selection rules to `QComboBox QAbstractItemView::item` to avoid painting the closed combobox solid blue.
 
 ---
 

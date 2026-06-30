@@ -21,7 +21,7 @@ BG_INSET = "#dde0e7"      # logs, deepest inset
 BORDER = "#c5c9d3"
 BORDER_SOFT = "#d8dbe3"
 BORDER_HOVER = "#a0a5b4"
-INPUT_BORDER = "#6b7280"  # strong gray outline for text/dropdown/spin fields
+INPUT_BORDER = "#4a5060"  # strong gray outline for text/dropdown/spin fields
 INPUT_BG = "#ffffff"        # white input background for contrast against cards
 
 FG_PRIMARY = "#1a1d26"
@@ -309,28 +309,28 @@ def build_stylesheet() -> str:
     /* --- Inputs --- */
     QLineEdit {{
         background-color: {INPUT_BG};
-        border: 1px solid {INPUT_BORDER};
+        border: 2px solid {INPUT_BORDER};
         border-radius: 6px;
-        padding: 6px 10px;
+        padding: 5px 9px;
         color: {FG_PRIMARY};
         font-size: 13px;
         selection-background-color: {ACCENT};
         min-width: 120px;
     }}
-    QLineEdit:focus {{ border: 2px solid {ACCENT}; padding: 5px 9px; }}
+    QLineEdit:focus {{ border-color: {ACCENT}; }}
 
     QComboBox {{
         background-color: {INPUT_BG};
-        border: 1px solid {INPUT_BORDER};
+        border: 2px solid {INPUT_BORDER};
         border-radius: 6px;
-        padding: 4px 10px;
+        padding: 3px 9px;
         color: {FG_PRIMARY};
         font-size: 13px;
         min-width: 120px;
         min-height: 28px;
     }}
-    QComboBox:hover {{ border: 1px solid {ACCENT}; }}
-    QComboBox:focus {{ border: 2px solid {ACCENT}; padding: 3px 9px; }}
+    QComboBox:hover {{ border-color: {ACCENT}; }}
+    QComboBox:focus {{ border-color: {ACCENT}; }}
     QComboBox::drop-down {{
         border: none;
         width: 24px;
@@ -350,32 +350,30 @@ def build_stylesheet() -> str:
         selection-color: white;
         outline: none;
         border-radius: 4px;
-        padding: 4px;
     }}
-    QComboBox::item {{
-        border-radius: 4px;
+    QComboBox QAbstractItemView::item {{
+        min-height: 22px;
         padding: 4px 8px;
-        min-height: 20px;
     }}
-    QComboBox::item:selected {{
+    QComboBox QAbstractItemView::item:selected {{
         background-color: {ACCENT};
         color: white;
     }}
-    QComboBox::item:hover {{
+    QComboBox QAbstractItemView::item:hover {{
         background-color: {ACCENT_SOFT};
         color: {FG_PRIMARY};
     }}
 
     QSpinBox, QDoubleSpinBox {{
         background-color: {INPUT_BG};
-        border: 1px solid {INPUT_BORDER};
+        border: 2px solid {INPUT_BORDER};
         border-radius: 6px;
-        padding: 4px 8px;
+        padding: 3px 7px;
         color: {FG_PRIMARY};
         font-size: 13px;
         min-width: 100px;
     }}
-    QSpinBox:focus, QDoubleSpinBox:focus {{ border: 2px solid {ACCENT}; padding: 3px 7px; }}
+    QSpinBox:focus, QDoubleSpinBox:focus {{ border-color: {ACCENT}; }}
     QSpinBox::up-button, QSpinBox::down-button,
     QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
         background: transparent;
