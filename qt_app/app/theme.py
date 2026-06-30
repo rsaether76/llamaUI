@@ -21,8 +21,6 @@ BG_INSET = "#dde0e7"      # logs, deepest inset
 BORDER = "#c5c9d3"
 BORDER_SOFT = "#d8dbe3"
 BORDER_HOVER = "#a0a5b4"
-INPUT_BORDER = "#4a5060"  # strong gray outline for text/dropdown/spin fields
-INPUT_BG = "#ffffff"        # white input background for contrast against cards
 
 FG_PRIMARY = "#1a1d26"
 FG_SECONDARY = "#4a5060"
@@ -307,91 +305,8 @@ def build_stylesheet() -> str:
     }}
 
     /* --- Inputs --- */
-    QLineEdit {{
-        background-color: {INPUT_BG};
-        border: 2px solid {INPUT_BORDER};
-        border-radius: 6px;
-        padding: 5px 9px;
-        color: {FG_PRIMARY};
-        font-size: 13px;
-        selection-background-color: {ACCENT};
-        min-width: 120px;
-    }}
-    QLineEdit:focus {{ border-color: {ACCENT}; }}
-
-    QComboBox {{
-        background-color: {INPUT_BG};
-        border: 2px solid {INPUT_BORDER};
-        border-radius: 6px;
-        padding: 3px 9px;
-        color: {FG_PRIMARY};
-        font-size: 13px;
-        min-width: 120px;
-        min-height: 28px;
-    }}
-    QComboBox:hover {{ border-color: {ACCENT}; }}
-    QComboBox:focus {{ border-color: {ACCENT}; }}
-    QComboBox::drop-down {{
-        border: none;
-        width: 24px;
-    }}
-    QComboBox::down-arrow {{
-        image: none;
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-top: 5px solid {FG_MUTED};
-        margin-right: 6px;
-    }}
-    QComboBox QAbstractItemView {{
-        background-color: {BG_PANEL};
-        border: 1px solid {INPUT_BORDER};
-        color: {FG_PRIMARY};
-        selection-background-color: {ACCENT};
-        selection-color: white;
-        outline: none;
-        border-radius: 4px;
-    }}
-    QComboBox QAbstractItemView::item {{
-        min-height: 22px;
-        padding: 4px 8px;
-    }}
-    QComboBox QAbstractItemView::item:selected {{
-        background-color: {ACCENT};
-        color: white;
-    }}
-    QComboBox QAbstractItemView::item:hover {{
-        background-color: {ACCENT_SOFT};
-        color: {FG_PRIMARY};
-    }}
-
-    QSpinBox, QDoubleSpinBox {{
-        background-color: {INPUT_BG};
-        border: 2px solid {INPUT_BORDER};
-        border-radius: 6px;
-        padding: 3px 7px;
-        color: {FG_PRIMARY};
-        font-size: 13px;
-        min-width: 100px;
-    }}
-    QSpinBox:focus, QDoubleSpinBox:focus {{ border-color: {ACCENT}; }}
-    QSpinBox::up-button, QSpinBox::down-button,
-    QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
-        background: transparent;
-        border: none;
-        width: 16px;
-    }}
-    QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
-        image: none;
-        border-left: 3px solid transparent;
-        border-right: 3px solid transparent;
-        border-bottom: 4px solid {FG_MUTED};
-    }}
-    QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
-        image: none;
-        border-left: 3px solid transparent;
-        border-right: 3px solid transparent;
-        border-top: 4px solid {FG_MUTED};
-    }}
+    /* Let the application style (Fusion) render QLineEdit, QComboBox,
+       QSpinBox, and QDoubleSpinBox so borders/selection look standard. */
 
     QPlainTextEdit, QTextBrowser {{
         {f_mono}

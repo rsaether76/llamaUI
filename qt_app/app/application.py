@@ -13,7 +13,7 @@ from typing import Optional
 
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyleFactory
 
 from . import theme
 
@@ -102,6 +102,12 @@ def create_app(argv: Optional[list[str]] = None) -> QApplication:
     # The PySide6 default Wayland plugin renders QWidget windows directly
     # to the surface.  On X11/Cinnamon this is irrelevant — the xcb plugin
     # is used instead (see _configure_platform).
+    # Use Qt's Fusion style for standard, consistent rendering of native
+    # widgets (borders, selection highlights, spinbox buttons, etc.). Our
+    # QSS only styles the app chrome and high-level containers.
+    if "Fusion" in QStyleFactory.keys():
+        app.setStyle("Fusion")
+
     theme.apply_palette(app)
     app.setStyleSheet(theme.build_stylesheet())
 
